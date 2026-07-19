@@ -7,6 +7,6 @@ node_modules/
 # OS junk
 .DS_Store
 
-# Logs
+# Logss
 npm-debug.log*
 *.log
