@@ -1,0 +1,12 @@
+# Dependencies
+node_modules/
+
+# Environment secrets — never commit real API keys
+.env
+
+# OS junk
+.DS_Store
+
+# Logs
+npm-debug.log*
+*.log

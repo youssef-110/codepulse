@@ -1,0 +1,29 @@
+{
+  "name": "codepulse",
+  "version": "1.0.0",
+  "description": "CodePulse — AI-powered code review dashboard. Paste a GitHub repo URL, get an instant senior-engineer-grade review powered by Groq + Llama 3.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "ai",
+    "code-review",
+    "groq",
+    "llama3",
+    "express",
+    "github",
+    "dashboard"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "node-fetch": "^2.7.0"
+  }
+}
