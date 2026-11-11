@@ -35,14 +35,31 @@ app.use(express.static(path.join(__dirname, 'public')));
 const RATE_WINDOW_MS = 10 * 60 * 1000;
 const RATE_MAX = Number(process.env.RATE_LIMIT_PER_10_MIN) || 10;
 const hits = new Map();
+const MAX_TRACKED_IPS = 10000;
+
+// On Vercel, x-real-ip is set by the platform to the connecting client and cannot be
+// spoofed by the caller. Elsewhere, only the socket address is trusted.
+function clientIp(req) {
+  const ip = (process.env.VERCEL && req.headers['x-real-ip']) || req.socket.remoteAddress || 'unknown';
+  return String(ip).slice(0, 64);
+}
+
+// Drop visitors with no recent calls, and cap the map so it cannot grow without bound.
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, times] of hits) {
+    if (!times.length || now - times[times.length - 1] >= RATE_WINDOW_MS) hits.delete(ip);
+  }
+}, 60 * 1000).unref();
 app.use('/api/analyze', (req, res, next) => {
-  const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+  const ip = clientIp(req);
   const now = Date.now();
   const recent = (hits.get(ip) || []).filter((t) => now - t < RATE_WINDOW_MS);
   if (recent.length >= RATE_MAX) {
     return res.status(429).json({ error: 'Too many reviews from you. Try again in a few minutes.' });
   }
   recent.push(now);
+  if (!hits.has(ip) && hits.size >= MAX_TRACKED_IPS) hits.delete(hits.keys().next().value);
   hits.set(ip, recent);
   next();
 });
