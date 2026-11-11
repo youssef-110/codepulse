@@ -1,5 +1,7 @@
 # ⚡ CodePulse
 
+**Live site:** https://codepulse-omega.vercel.app
+
 **AI-powered code review dashboard.** Paste any public GitHub repository URL and get an instant, senior-engineer-grade review — security, code quality, performance, maintainability, and documentation — powered by Groq + gpt-oss-120b.
 
 ## How it works
