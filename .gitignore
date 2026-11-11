@@ -10,3 +10,6 @@ node_modules/
 # Logss
 npm-debug.log*
 *.log
+
+.vercel
+.env*

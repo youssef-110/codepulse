@@ -30,6 +30,23 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// The live site runs on the owner's free Groq key, so cap reviews per visitor.
+// shortcut: in-memory per instance, resets on cold start; use a shared store if abused.
+const RATE_WINDOW_MS = 10 * 60 * 1000;
+const RATE_MAX = Number(process.env.RATE_LIMIT_PER_10_MIN) || 10;
+const hits = new Map();
+app.use('/api/analyze', (req, res, next) => {
+  const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+  const now = Date.now();
+  const recent = (hits.get(ip) || []).filter((t) => now - t < RATE_WINDOW_MS);
+  if (recent.length >= RATE_MAX) {
+    return res.status(429).json({ error: 'Too many reviews from you. Try again in a few minutes.' });
+  }
+  recent.push(now);
+  hits.set(ip, recent);
+  next();
+});
+
 /* ------------------------------------------------------------------ */
 /*  Errors                                                             */
 /* ------------------------------------------------------------------ */
