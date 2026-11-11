@@ -1,12 +1,12 @@
 # ⚡ CodePulse
 
-**AI-powered code review dashboard.** Paste any public GitHub repository URL and get an instant, senior-engineer-grade review — security, code quality, performance, maintainability, and documentation — powered by Groq + Llama 3.
+**AI-powered code review dashboard.** Paste any public GitHub repository URL and get an instant, senior-engineer-grade review — security, code quality, performance, maintainability, and documentation — powered by Groq + gpt-oss-120b.
 
 ## How it works
 
 1. You submit a GitHub repo URL and pick an analysis focus (full, security, quality, or quick).
 2. The server pulls the repo's file tree from the GitHub API, filters out noise (lockfiles, binaries, `node_modules`, tests, etc.), and ranks the remaining files by importance (entry points, config, routes/services/models score highest).
-3. The top-scoring files (up to 15 files / 60k characters) are bundled into a prompt and sent to Groq's Llama 3.3 70B model.
+3. The top-scoring files (up to 15 files / 12k characters, to fit Groq's free-tier token limit) are bundled into a prompt and sent to Groq's gpt-oss-120b model.
 4. The model returns a structured JSON review — overall score, letter grades per category, vulnerabilities with fixes, improvement suggestions, complexity assessment, and detected tech stack — rendered on the dashboard.
 
 Works on **any public GitHub repository**, not just your own. Private repos work too, if `GITHUB_TOKEN` belongs to an account with access.
@@ -15,7 +15,7 @@ Works on **any public GitHub repository**, not just your own. Private repos work
 
 - **Backend:** Node.js, Express
 - **Frontend:** HTML5, CSS3, vanilla JS, GSAP
-- **AI:** Groq API (Llama 3.3 70B)
+- **AI:** Groq API (openai/gpt-oss-120b, set GROQ_MODEL to change it)
 - **Data source:** GitHub REST API
 
 ## Setup

@@ -19,11 +19,12 @@ const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+const GROQ_MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
 
 const MAX_FILES = 15;
-const MAX_CHARS_PER_FILE = 6000;
-const MAX_TOTAL_CHARS = 60000;
+const MAX_CHARS_PER_FILE = 3000;
+// Groq's free tier allows 8,000 tokens per minute, counting input plus max_tokens.
+const MAX_TOTAL_CHARS = Number(process.env.MAX_TOTAL_CHARS) || 12000;
 
 app.use(cors());
 app.use(express.json());
@@ -63,17 +64,25 @@ function parseGitHubUrl(repoUrl) {
   return { owner: match[1], repo: match[2] };
 }
 
+// Set to false once GitHub rejects the token, so an expired token degrades to anonymous access.
+let githubTokenValid = Boolean(GITHUB_TOKEN);
+
 function githubHeaders() {
   const headers = {
     Accept: 'application/vnd.github+json',
     'User-Agent': 'CodePulse-Analyzer'
   };
-  if (GITHUB_TOKEN) headers.Authorization = `Bearer ${GITHUB_TOKEN}`;
+  if (githubTokenValid) headers.Authorization = `Bearer ${GITHUB_TOKEN}`;
   return headers;
 }
 
 async function githubFetch(url) {
-  const res = await fetch(url, { headers: githubHeaders() });
+  let res = await fetch(url, { headers: githubHeaders() });
+  if (res.status === 401 && githubTokenValid) {
+    console.warn('[CodePulse] GITHUB_TOKEN was rejected (expired or revoked). Falling back to anonymous GitHub API (60 requests/hour).');
+    githubTokenValid = false;
+    res = await fetch(url, { headers: githubHeaders() });
+  }
   if (res.status === 404) {
     throw new HttpError(404, 'Repository not found. It may be private, deleted, or the URL is misspelled.');
   }
@@ -285,6 +294,8 @@ async function callGroq(prompt) {
       model: GROQ_MODEL,
       temperature: 0.3,
       max_tokens: 4000,
+      // gpt-oss models reason before answering; keep it short so the review fits the budget.
+      ...(GROQ_MODEL.startsWith('openai/gpt-oss') ? { reasoning_effort: 'low', max_tokens: 4500 } : {}),
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: prompt }

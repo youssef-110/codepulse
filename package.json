@@ -1,7 +1,7 @@
 {
   "name": "codepulse",
   "version": "1.0.0",
-  "description": "CodePulse — AI-powered code review dashboard. Paste a GitHub repo URL, get an instant senior-engineer-grade review powered by Groq + Llama 3.",
+  "description": "CodePulse — AI-powered code review dashboard. Paste a GitHub repo URL, get an instant senior-engineer-grade review powered by Groq + gpt-oss-120b.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
