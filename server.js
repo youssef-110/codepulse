@@ -48,9 +48,23 @@ function globalCalls(now) {
 // spoofed by the caller. Elsewhere, only the socket address is trusted.
 function clientIp(req) {
   const ip = (process.env.VERCEL && req.headers['x-real-ip']) || req.socket.remoteAddress || 'unknown';
-  const text = String(ip).slice(0, 64);
-  // Group IPv6 by /64, since one client can own a whole /64 block.
-  return text.includes(':') ? text.split(':').slice(0, 4).join(':') : text;
+  return ipBucket(ip);
+}
+
+// Bucket key for a client IP: IPv4 as is, IPv6 grouped by its /64 prefix.
+// '::' is expanded first so every address in a /64 maps to the same key.
+function ipBucket(raw) {
+  let ip = String(raw || 'unknown').trim().toLowerCase().slice(0, 64);
+  const mapped = ip.match(/^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/);
+  if (mapped) return mapped[1];
+  if (!ip.includes(':')) return ip;
+  ip = ip.split('%')[0];
+  const [head, tail = ''] = ip.split('::');
+  const left = head ? head.split(':') : [];
+  const right = ip.includes('::') && tail ? tail.split(':') : [];
+  const missing = 8 - left.length - right.length;
+  const groups = ip.includes('::') ? [...left, ...Array(Math.max(missing, 0)).fill('0'), ...right] : left;
+  return groups.slice(0, 4).map((g) => (parseInt(g, 16) || 0).toString(16)).join(':');
 }
 
 // Drop visitors with no recent calls, and cap the map so it cannot grow without bound.
